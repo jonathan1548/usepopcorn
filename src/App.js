@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -8,11 +8,34 @@ const Key = "ac675b32";
 export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const query = "interstellar";
 
-  fetch(`http://www.omdbapi.com/?apikey=${Key}&
-s=interstellar`)
-    .then((res) => res.json())
-    .then((data) => setMovies(data.Search));
+  useEffect(function () {
+    async function fetchMovies() {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`http://www.omdbapi.com/?apikey=${Key}&
+s=${query}`);
+        if (!res.ok) {
+          throw new Error(" something went wrong with fetching movies");
+        }
+        const data = await res.json();
+        if (data.Response === "False") {
+          throw new Error(" movie not found");
+        }
+
+        setMovies(data.Search);
+      } catch (err) {
+        console.error(err.message);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchMovies();
+  }, []);
 
   return (
     <>
@@ -23,7 +46,11 @@ s=interstellar`)
 
       <Main>
         <Box>
-          <MovieList movies={movies} />
+          {isLoading && <Loader />}
+          {!isLoading && !error && movies?.length > 0 && (
+            <MovieList movies={movies} />
+          )}
+          {error && <ErrorMessage message={error} />}
         </Box>
 
         <Box>
@@ -35,12 +62,26 @@ s=interstellar`)
   );
 }
 
+function Loader() {
+  return <p className="loader">Loading...</p>;
+}
 function NavBar({ children }) {
   return (
     <nav className="nav-bar">
       <Logo />
       {children}
     </nav>
+  );
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span role="img" aria-label="error">
+        ❌
+      </span>
+      {message}
+    </p>
   );
 }
 
