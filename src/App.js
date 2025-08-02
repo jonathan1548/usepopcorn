@@ -253,7 +253,8 @@ function MovieDetails({ selectedId, onClose }) {
               <StarRatting maxRating={10} size={24} />
             </div>
 
-            <p className="details-plot">
+            <p>
+              <span> 📖 </span>
               <em>{plot}</em>
             </p>
             <p>
