@@ -29,14 +29,20 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
+
+
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
-          const res = await fetch(`http://www.omdbapi.com/?apikey=${Key}&
-s=${query}`);
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${Key}&
+s=${query}`,
+            { signal: controller.signal }
+          );
           if (!res.ok) {
             throw new Error(" something went wrong with fetching movies");
           }
@@ -47,7 +53,7 @@ s=${query}`);
 
           setMovies(data.Search);
         } catch (err) {
-          console.error(err.message);
+          console.log(err.message);
           setError(err.message);
         } finally {
           setIsLoading(false);
@@ -58,7 +64,12 @@ s=${query}`);
         setError("");
         return;
       }
+      handleCloseMovie();
       fetchMovies();
+
+      return function () {
+        controller.abort();
+      }
     },
     [query]
   );
@@ -230,6 +241,16 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onClose();
   }
+  useEffect(function(){
+  document.addEventListener('keydown', function(e){
+    if(e.code === 'Escape'){
+      onClose();
+    }
+  });
+  return function () {
+    document.removeEventListener('keydown', onClose);
+  };
+}, [onClose]);
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -250,12 +271,15 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
     [selectedId]
   );
 
-  useEffect(function() {
-    document.title = title ? `${title} Movie` : "Loading...";
-    return function() {
-      document.title = "usePopcorn";
-    }
-  },[ title ]);
+  useEffect(
+    function () {
+      document.title = title ? `${title} Movie` : "Loading...";
+      return function () {
+        document.title = "usePopcorn";
+      };
+    },
+    [title]
+  );
 
   return (
     <div className="details">
