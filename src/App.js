@@ -9,10 +9,14 @@ const Key = "ac675b32";
 export default function App() {
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [error, setError] = useState("");
+  // const [watched, setWatched] = useState([]);
+  const [watched, setWatched] = useState(function () {
+    const stored = localStorage.getItem("watched");
+    return JSON.parse(stored);
+  });
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
@@ -30,7 +34,12 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
-
+  useEffect(
+    function () {
+      localStorage.setItem("watched", JSON.stringify(watched));
+    },
+    [watched]
+  );
 
   useEffect(
     function () {
@@ -70,7 +79,7 @@ s=${query}`,
 
       return function () {
         controller.abort();
-      }
+      };
     },
     [query]
   );
@@ -229,8 +238,6 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
     Genre: genre,
   } = movie;
 
-  
-
   function handleAdd() {
     const newWatchedMovie = {
       imdbID: selectedId,
@@ -244,16 +251,19 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onClose();
   }
-  useEffect(function(){
-  document.addEventListener('keydown', function(e){
-    if(e.code === 'Escape'){
-      onClose();
-    }
-  });
-  return function () {
-    document.removeEventListener('keydown', onClose);
-  };
-}, [onClose]);
+  useEffect(
+    function () {
+      document.addEventListener("keydown", function (e) {
+        if (e.code === "Escape") {
+          onClose();
+        }
+      });
+      return function () {
+        document.removeEventListener("keydown", onClose);
+      };
+    },
+    [onClose]
+  );
   useEffect(
     function () {
       async function getMovieDetails() {
