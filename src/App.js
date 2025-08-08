@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState  } from "react";
 import StarRatting from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -8,11 +9,8 @@ const Key = "ac675b32";
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-  const [error, setError] = useState("");
-  // const [watched, setWatched] = useState([]);
+  const { movies, isLoading, error } = useMovies(query);
   const [watched, setWatched] = useState(function () {
     const stored = localStorage.getItem("watched");
     return stored ? JSON.parse(stored) : [];
@@ -39,49 +37,6 @@ export default function App() {
       localStorage.setItem("watched", JSON.stringify(watched));
     },
     [watched]
-  );
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${Key}&
-s=${query}`,
-            { signal: controller.signal }
-          );
-          if (!res.ok) {
-            throw new Error(" something went wrong with fetching movies");
-          }
-          const data = await res.json();
-          if (data.Response === "False") {
-            throw new Error(" movie not found");
-          }
-
-          setMovies(data.Search);
-        } catch (err) {
-          console.log(err.message);
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-      if (query.length < 3) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
   );
 
   return (
@@ -240,7 +195,6 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
   const [userRating, setUserRating] = useState("");
 
   const countRef = useRef(0);
-
 
   useEffect(
     function () {
