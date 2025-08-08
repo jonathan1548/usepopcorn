@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import StarRatting from "./StarRating";
-
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
@@ -228,8 +227,6 @@ function MovieDetails({ selectedId, onClose, onAddWatched, watched }) {
     Director: director,
     Genre: genre,
   } = movie;
-
-  
 
   function handleAdd() {
     const newWatchedMovie = {
